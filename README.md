@@ -3,6 +3,10 @@
 
 A full-stack property rental platform inspired by Airbnb, built using the MERN Stack. Users can explore properties, search and filter listings, book stays, and manage their own property listings through a dedicated host dashboard.
 
+## 🌐 Live Demo
+
+**Live Website:** https://airbnb-clone-rho-nine-85.vercel.app/
+
 ## ✨ Features
 
 ### 🔐 Authentication & User Management
@@ -158,7 +162,7 @@ Make sure to configure your own MongoDB and Cloudinary credentials before runnin
 
 Computer Engineering Graduate | Full Stack Developer
 
-[GitHub](https://github.com/AryanBhatare07)
+[GitHub](https://github.com/AryanBhatare07/airbnb-clone)
 
 ---
 
