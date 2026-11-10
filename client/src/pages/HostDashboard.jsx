@@ -1,5 +1,23 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  Plus,
+  X,
+  Home,
+  MapPin,
+  Users,
+  BedDouble,
+  Bath,
+  IndianRupee,
+  CalendarDays,
+  Pencil,
+  Trash2,
+  Eye,
+  ImagePlus,
+  LoaderCircle,
+} from "lucide-react";
+
+import LocationPicker from "../components/LocationPicker";
 import api from "../services/api";
 
 const initialFormData = {
@@ -16,6 +34,21 @@ const initialFormData = {
   lng: "",
   amenities: "",
 };
+
+const categories = [
+  "Beach",
+  "Mountains",
+  "City",
+  "Countryside",
+  "Amazing Views",
+  "Cabins",
+  "Luxury",
+];
+
+const inputClass =
+  "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition-all duration-200";
+
+const labelClass = "block text-sm font-semibold text-gray-700 mb-2";
 
 const HostDashboard = () => {
   const [listings, setListings] = useState([]);
@@ -67,6 +100,16 @@ const HostDashboard = () => {
 
   const handleCreateListing = async (e) => {
     e.preventDefault();
+
+    if (
+      formData.lat === "" ||
+      formData.lng === "" ||
+      !Number.isFinite(Number(formData.lat)) ||
+      !Number.isFinite(Number(formData.lng))
+    ) {
+      setError("Please select your property location on the map.");
+      return;
+    }
 
     try {
       setFormLoading(true);
@@ -149,10 +192,16 @@ const HostDashboard = () => {
       lng: listing.coordinates?.lng ?? "",
       amenities: listing.amenities?.join(", ") || "",
     });
-    setExistingImages(listing.images || []);
 
+    setExistingImages(listing.images || []);
+    setSelectedImages([]);
+    setError("");
     setShowForm(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const handleImageChange = (e) => {
@@ -189,6 +238,7 @@ const HostDashboard = () => {
     setFormData(initialFormData);
     setSelectedImages([]);
     setExistingImages([]);
+    setError("");
   };
 
   useEffect(() => {
@@ -197,20 +247,37 @@ const HostDashboard = () => {
   }, []);
 
   if (loading) {
-    return <p className="text-center mt-10">Loading your dashboard...</p>;
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+        <LoaderCircle className="w-8 h-8 text-rose-500 animate-spin" />
+        <p className="text-gray-500 text-sm">Loading your dashboard...</p>
+      </div>
+    );
   }
 
   if (error && listings.length === 0) {
-    return <p className="text-center mt-10 text-red-500">{error}</p>;
+    return (
+      <div className="w-full px-5 md:px-10 py-12 text-center">
+        <p className="text-rose-500">{error}</p>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-5 py-8">
-      {/* Dashboard Heading */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <div className="w-full max-w-none px-5 md:px-10 lg:px-12 py-10">
+      {/* Dashboard Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 mb-10">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Host Dashboard</h1>
-          <p className="text-gray-500 mt-2">
+          <div className="flex items-center gap-2 text-rose-500 mb-2">
+            <Home size={18} />
+            <span className="text-sm font-semibold">HOST PANEL</span>
+          </div>
+
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
+            Host Dashboard
+          </h1>
+
+          <p className="text-gray-500 text-sm md:text-base mt-2">
             Manage your property listings and guest bookings.
           </p>
         </div>
@@ -222,134 +289,217 @@ const HostDashboard = () => {
             } else {
               setEditingId(null);
               setFormData(initialFormData);
+              setSelectedImages([]);
+              setExistingImages([]);
+              setError("");
               setShowForm(true);
             }
           }}
-          className="bg-rose-500 hover:bg-rose-600 text-white px-5 py-3 rounded-lg font-medium transition"
+          className="inline-flex items-center justify-center gap-2 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white px-6 py-3 rounded-xl font-semibold shadow-sm hover:shadow-md transition-all duration-300"
         >
-          {showForm ? "Close Form" : "+ Add New Listing"}
+          {showForm ? <X size={19} /> : <Plus size={19} />}
+          {showForm ? "Close Form" : "Add New Listing"}
         </button>
       </div>
 
+      {/* Error Message */}
       {error && (
-        <p className="bg-red-50 text-red-600 p-3 rounded-lg mb-5">{error}</p>
+        <div className="bg-rose-50 border border-rose-100 text-rose-600 px-4 py-3 rounded-xl mb-6 text-sm">
+          {error}
+        </div>
       )}
 
-      {/* Create / Edit Form */}
+      {/* Create / Edit Listing Form */}
       {showForm && (
         <form
           onSubmit={handleCreateListing}
-          className="border border-gray-200 rounded-xl p-5 md:p-6 mb-10 bg-white"
+          className="border border-gray-200 rounded-2xl p-5 md:p-8 mb-12 bg-white shadow-sm"
         >
-          <h2 className="text-xl font-semibold mb-6">
-            {editingId ? "Edit Listing" : "Create New Listing"}
-          </h2>
+          <div className="flex items-center justify-between gap-3 mb-7">
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold tracking-tight text-gray-900">
+                {editingId ? "Edit Listing" : "Create New Listing"}
+              </h2>
+
+              <p className="text-sm text-gray-500 mt-1">
+                Add your property details below.
+              </p>
+            </div>
+
+            <div className="hidden sm:flex w-11 h-11 items-center justify-center rounded-xl bg-rose-50 text-rose-500">
+              <Home size={22} />
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {Object.entries(formData).map(([key, value]) => (
-              <div
-                key={key}
-                className={key === "description" ? "md:col-span-2" : ""}
-              >
-                <label className="block mb-2 capitalize font-medium text-sm">
-                  {key}
-                </label>
+            {/* Listing Fields */}
+            {Object.entries(formData)
+              .filter(([key]) => !["lat", "lng"].includes(key))
+              .map(([key, value]) => (
+                <div
+                  key={key}
+                  className={
+                    key === "description" || key === "amenities"
+                      ? "md:col-span-2"
+                      : ""
+                  }
+                >
+                  <label className={labelClass}>
+                    {key === "maxGuests"
+                      ? "Maximum Guests"
+                      : key === "amenities"
+                        ? "Amenities"
+                        : key === "bedrooms"
+                          ? "Bedrooms"
+                          : key === "bathrooms"
+                            ? "Bathrooms"
+                            : key.charAt(0).toUpperCase() + key.slice(1)}
+                  </label>
 
-                {key === "description" ? (
-                  <textarea
-                    value={value}
-                    onChange={(e) =>
-                      setFormData({ ...formData, [key]: e.target.value })
-                    }
-                    className="w-full border rounded-lg p-3 outline-none focus:border-rose-500"
-                    rows="4"
-                    required
-                  />
-                ) : key === "category" ? (
-                  <select
-                    value={value}
-                    onChange={(e) =>
-                      setFormData({ ...formData, [key]: e.target.value })
-                    }
-                    className="w-full border rounded-lg p-3 outline-none focus:border-rose-500"
-                  >
-                    {[
-                      "Beach",
-                      "Mountains",
-                      "City",
-                      "Countryside",
-                      "Amazing Views",
-                      "Cabins",
-                      "Luxury",
-                    ].map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type={
-                      ["price", "maxGuests", "bedrooms", "bathrooms"].includes(
-                        key,
-                      )
-                        ? "number"
-                        : "text"
-                    }
-                    min={
-                      ["price", "maxGuests", "bedrooms", "bathrooms"].includes(
-                        key,
-                      )
-                        ? "1"
-                        : undefined
-                    }
-                    value={value}
-                    onChange={(e) =>
-                      setFormData({ ...formData, [key]: e.target.value })
-                    }
-                    className="w-full border rounded-lg p-3 outline-none focus:border-rose-500"
-                    required
-                  />
-                )}
-              </div>
-            ))}
+                  {key === "description" || key === "amenities" ? (
+                    <textarea
+                      value={value}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          [key]: e.target.value,
+                        })
+                      }
+                      className={`${inputClass} resize-y`}
+                      rows={key === "description" ? 4 : 2}
+                      placeholder={
+                        key === "description"
+                          ? "Describe your property..."
+                          : "WiFi, Swimming Pool, Parking..."
+                      }
+                      required={key === "description"}
+                    />
+                  ) : key === "category" ? (
+                    <select
+                      value={value}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          [key]: e.target.value,
+                        })
+                      }
+                      className={inputClass}
+                    >
+                      {categories.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={
+                        [
+                          "price",
+                          "maxGuests",
+                          "bedrooms",
+                          "bathrooms",
+                        ].includes(key)
+                          ? "number"
+                          : "text"
+                      }
+                      min={
+                        [
+                          "price",
+                          "maxGuests",
+                          "bedrooms",
+                          "bathrooms",
+                        ].includes(key)
+                          ? "1"
+                          : undefined
+                      }
+                      value={value}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          [key]: e.target.value,
+                        })
+                      }
+                      className={inputClass}
+                      placeholder={`Enter ${key}`}
+                      required={!["amenities"].includes(key)}
+                    />
+                  )}
+                </div>
+              ))}
 
+            {/* Location Picker */}
+            <div className="md:col-span-2 border border-gray-100 rounded-2xl p-4 md:p-5 bg-gray-50/60">
+              <LocationPicker
+                coordinates={{
+                  lat: formData.lat,
+                  lng: formData.lng,
+                }}
+                onChange={(coordinates) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    lat: coordinates.lat,
+                    lng: coordinates.lng,
+                  }))
+                }
+                searchQuery={`${formData.location}, ${formData.country}`}
+              />
+            </div>
+
+            {/* Property Images */}
             <div className="md:col-span-2">
-              <label className="block mb-2 font-medium text-sm">
-                Property Images (Maximum 5)
+              <label className={labelClass}>Property Images (Maximum 5)</label>
+
+              <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-gray-200 hover:border-rose-300 rounded-2xl p-7 cursor-pointer transition-colors bg-gray-50/50">
+                <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                  <ImagePlus size={24} />
+                </div>
+
+                <div className="text-center">
+                  <p className="font-semibold text-gray-700 text-sm">
+                    Click to upload property images
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    You can select up to 5 images
+                  </p>
+                </div>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
               </label>
 
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImageChange}
-                className="w-full border rounded-lg p-3"
-              />
-
+              {/* Existing Images */}
               {existingImages.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm font-medium mb-2">Existing Images</p>
+                <div className="mt-5">
+                  <p className="text-sm font-semibold text-gray-700 mb-3">
+                    Existing Images
+                  </p>
 
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-4">
                     {existingImages.map((image, index) => (
-                      <div key={index} className="relative">
+                      <div key={index} className="relative group">
                         <img
                           src={image}
                           alt="Existing property"
-                          className="w-24 h-20 object-cover rounded-lg"
+                          className="w-28 h-24 object-cover rounded-xl border border-gray-200"
                         />
 
                         <button
                           type="button"
                           onClick={() =>
-                            setExistingImages(
-                              existingImages.filter((_, i) => i !== index),
+                            setExistingImages((prev) =>
+                              prev.filter((_, i) => i !== index),
                             )
                           }
-                          className="text-xs text-red-500 mt-1"
+                          className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center shadow hover:bg-rose-600 transition"
+                          title="Remove image"
                         >
-                          Remove
+                          <X size={15} />
                         </button>
                       </div>
                     ))}
@@ -357,26 +507,43 @@ const HostDashboard = () => {
                 </div>
               )}
 
+              {/* Selected Images */}
               {selectedImages.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm font-medium mb-2">Selected Images</p>
+                <div className="mt-5">
+                  <p className="text-sm font-semibold text-gray-700 mb-3">
+                    Selected Images
+                  </p>
 
-                  {selectedImages.map((image, index) => (
-                    <p key={index} className="text-sm text-gray-600">
-                      {image.name}
-                    </p>
-                  ))}
+                  <div className="space-y-2">
+                    {selectedImages.map((image, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3"
+                      >
+                        <ImagePlus size={17} className="text-rose-500" />
+
+                        <span className="text-sm text-gray-600 truncate">
+                          {image.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 mt-6">
+          {/* Form Actions */}
+          <div className="flex flex-wrap gap-3 mt-8 pt-6 border-t border-gray-100">
             <button
               type="submit"
               disabled={formLoading}
-              className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-3 rounded-lg disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 bg-rose-500 hover:bg-rose-600 text-white px-7 py-3 rounded-xl font-semibold shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
             >
+              {formLoading && (
+                <LoaderCircle size={18} className="animate-spin" />
+              )}
+
               {formLoading
                 ? "Saving..."
                 : editingId
@@ -387,7 +554,7 @@ const HostDashboard = () => {
             <button
               type="button"
               onClick={handleCancelForm}
-              className="border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50"
+              className="border border-gray-200 text-gray-700 px-7 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200"
             >
               Cancel
             </button>
@@ -396,59 +563,129 @@ const HostDashboard = () => {
       )}
 
       {/* My Listings */}
-      <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-5">
-          My Listings ({listings.length})
-        </h2>
+      <section className="mb-14">
+        <div className="flex items-center justify-between gap-3 mb-6">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">
+              My Listings
+            </h2>
+
+            <p className="text-sm text-gray-500 mt-1">
+              Manage all your listed properties.
+            </p>
+          </div>
+
+          <span className="bg-rose-50 text-rose-600 px-4 py-2 rounded-full text-sm font-semibold">
+            {listings.length} Properties
+          </span>
+        </div>
 
         {listings.length === 0 ? (
-          <p className="text-gray-500 border rounded-xl p-6">
-            You haven't created any listings yet.
-          </p>
+          <div className="border border-dashed border-gray-300 rounded-2xl p-10 text-center bg-gray-50/50">
+            <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mx-auto mb-4 text-gray-400">
+              <Home size={26} />
+            </div>
+
+            <h3 className="font-semibold text-gray-800">No listings yet</h3>
+
+            <p className="text-sm text-gray-500 mt-2">
+              You haven't created any listings yet.
+            </p>
+
+            <button
+              onClick={() => setShowForm(true)}
+              className="mt-5 text-rose-500 font-semibold text-sm hover:text-rose-600"
+            >
+              + Add your first property
+            </button>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {listings.map((listing) => (
               <div
                 key={listing._id}
-                className="border rounded-xl overflow-hidden bg-white"
+                className="group border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
               >
-                <img
-                  src={
-                    listing.images?.[0] ||
-                    "https://placehold.co/600x400?text=No+Image"
-                  }
-                  alt={listing.title}
-                  className="w-full h-44 object-cover"
-                />
+                {/* Listing Image */}
+                <div className="relative overflow-hidden">
+                  <img
+                    src={
+                      listing.images?.[0] ||
+                      "https://placehold.co/600x400?text=No+Image"
+                    }
+                    alt={listing.title}
+                    className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
 
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg">{listing.title}</h3>
+                  <span className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-full">
+                    {listing.category}
+                  </span>
+                </div>
 
-                  <p className="text-sm text-gray-500 mt-1">
-                    {listing.location}, {listing.country}
+                {/* Listing Details */}
+                <div className="p-5">
+                  <h3 className="font-bold text-lg tracking-tight text-gray-900 truncate">
+                    {listing.title}
+                  </h3>
+
+                  <p className="flex items-center gap-1.5 text-sm text-gray-500 mt-2">
+                    <MapPin size={15} className="shrink-0" />
+                    <span className="truncate">
+                      {listing.location}, {listing.country}
+                    </span>
                   </p>
 
-                  <p className="font-semibold mt-2">₹{listing.price} / night</p>
+                  <div className="flex items-center gap-1 mt-3">
+                    <IndianRupee size={16} className="text-gray-900" />
 
+                    <span className="font-bold text-gray-900">
+                      {listing.price}
+                    </span>
+
+                    <span className="text-sm text-gray-500">/ night</span>
+                  </div>
+
+                  <div className="flex items-center gap-4 mt-4 text-xs text-gray-500 border-t border-gray-100 pt-4">
+                    <span className="flex items-center gap-1">
+                      <Users size={14} />
+                      {listing.maxGuests} Guests
+                    </span>
+
+                    <span className="flex items-center gap-1">
+                      <BedDouble size={14} />
+                      {listing.bedrooms} Beds
+                    </span>
+
+                    <span className="flex items-center gap-1">
+                      <Bath size={14} />
+                      {listing.bathrooms} Baths
+                    </span>
+                  </div>
+
+                  {/* View Listing */}
                   <Link
                     to={`/listings/${listing._id}`}
-                    className="block text-center bg-gray-900 text-white py-2 rounded-lg mt-4 hover:bg-gray-700 transition"
+                    className="flex items-center justify-center gap-2 bg-gray-900 text-white py-2.5 rounded-xl mt-5 hover:bg-gray-700 transition-all duration-200 font-semibold text-sm"
                   >
+                    <Eye size={16} />
                     View Listing
                   </Link>
 
+                  {/* Edit / Delete */}
                   <div className="flex gap-3 mt-3">
                     <button
                       onClick={() => handleEditListing(listing)}
-                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition"
+                      className="flex-1 flex items-center justify-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 py-2.5 rounded-xl transition-all duration-200 font-semibold text-sm"
                     >
+                      <Pencil size={15} />
                       Edit
                     </button>
 
                     <button
                       onClick={() => handleDeleteListing(listing._id)}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition"
+                      className="flex-1 flex items-center justify-center gap-2 bg-rose-50 text-rose-600 hover:bg-rose-100 py-2.5 rounded-xl transition-all duration-200 font-semibold text-sm"
                     >
+                      <Trash2 size={15} />
                       Delete
                     </button>
                   </div>
@@ -459,51 +696,123 @@ const HostDashboard = () => {
         )}
       </section>
 
-      <hr className="my-8" />
+      {/* Divider */}
+      <div className="border-t border-gray-200 my-10" />
 
       {/* Guest Bookings */}
       <section>
-        <h2 className="text-2xl font-bold mb-5">
-          Guest Bookings ({hostBookings.length})
-        </h2>
+        <div className="mb-6">
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">
+            Guest Bookings
+          </h2>
+
+          <p className="text-sm text-gray-500 mt-1">
+            Check the reservations made for your properties.
+          </p>
+        </div>
 
         {bookingsLoading ? (
-          <p className="text-gray-500">Loading bookings...</p>
+          <div className="flex items-center gap-3 text-gray-500 py-6">
+            <LoaderCircle size={20} className="animate-spin text-rose-500" />
+            <span className="text-sm">Loading guest bookings...</span>
+          </div>
         ) : bookingsError ? (
-          <p className="text-red-500">{bookingsError}</p>
+          <div className="bg-rose-50 text-rose-600 p-4 rounded-xl text-sm">
+            {bookingsError}
+          </div>
         ) : hostBookings.length === 0 ? (
-          <p className="text-gray-500 border rounded-xl p-6">
-            No bookings received yet.
-          </p>
+          <div className="border border-dashed border-gray-300 rounded-2xl p-10 text-center bg-gray-50/50">
+            <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mx-auto mb-4 text-gray-400">
+              <CalendarDays size={25} />
+            </div>
+
+            <h3 className="font-semibold text-gray-800">No bookings yet</h3>
+
+            <p className="text-sm text-gray-500 mt-2">
+              You haven't received any guest bookings yet.
+            </p>
+          </div>
         ) : (
           <div className="space-y-4">
             {hostBookings.map((booking) => (
-              <div key={booking._id} className="border rounded-xl p-5 bg-white">
-                <h3 className="font-semibold text-lg mb-2">
-                  {booking.listing?.title || "Property"}
-                </h3>
+              <div
+                key={booking._id}
+                className="border border-gray-200 rounded-2xl p-5 md:p-6 bg-white shadow-sm hover:shadow-md transition-all duration-300"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                  <div>
+                    <h3 className="font-bold text-lg text-gray-900">
+                      {booking.listing?.title || "Property"}
+                    </h3>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
-                  <p>Guest: {booking.guest?.name || "Guest"}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {booking.guest?.name || "Guest"}
+                    </p>
+                  </div>
 
-                  <p>
-                    Check-in: {new Date(booking.checkIn).toLocaleDateString()}
-                  </p>
+                  <span
+                    className={`w-fit px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${
+                      booking.status === "confirmed"
+                        ? "bg-green-50 text-green-700"
+                        : booking.status === "cancelled"
+                          ? "bg-rose-50 text-rose-600"
+                          : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {booking.status}
+                  </span>
+                </div>
 
-                  <p>
-                    Check-out: {new Date(booking.checkOut).toLocaleDateString()}
-                  </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                  <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+                    <CalendarDays
+                      size={18}
+                      className="text-rose-500 shrink-0"
+                    />
 
-                  <p>Guests: {booking.guests}</p>
+                    <div>
+                      <p className="text-xs text-gray-400">Check-in</p>
+                      <p className="font-semibold text-gray-800 mt-1">
+                        {new Date(booking.checkIn).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
 
-                  <p>Total Price: ₹{booking.totalPrice}</p>
+                  <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+                    <CalendarDays
+                      size={18}
+                      className="text-rose-500 shrink-0"
+                    />
 
-                  <p>
-                    Status:{" "}
-                    <span className="font-medium capitalize">
-                      {booking.status}
-                    </span>
-                  </p>
+                    <div>
+                      <p className="text-xs text-gray-400">Check-out</p>
+                      <p className="font-semibold text-gray-800 mt-1">
+                        {new Date(booking.checkOut).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+                    <Users size={18} className="text-rose-500 shrink-0" />
+
+                    <div>
+                      <p className="text-xs text-gray-400">Guests</p>
+                      <p className="font-semibold text-gray-800 mt-1">
+                        {booking.guests}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 sm:col-span-2 lg:col-span-1">
+                    <IndianRupee size={18} className="text-rose-500 shrink-0" />
+
+                    <div>
+                      <p className="text-xs text-gray-400">Total Price</p>
+                      <p className="font-bold text-gray-900 mt-1">
+                        ₹{booking.totalPrice}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}

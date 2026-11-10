@@ -1,6 +1,17 @@
-
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import {
+  MapPin,
+  Star,
+  Users,
+  BedDouble,
+  Bath,
+  CalendarDays,
+  LoaderCircle,
+  House,
+  CheckCircle2,
+  MessageSquare,
+} from "lucide-react";
 import api from "../services/api";
 import ListingMap from "../components/ListingMap";
 
@@ -34,6 +45,8 @@ function ListingDetails() {
     const fetchListing = async () => {
       try {
         setLoading(true);
+        setError("");
+
         const response = await api.get(`/listings/${id}`);
         setListing(response.data.listing);
       } catch (error) {
@@ -50,6 +63,7 @@ function ListingDetails() {
     const fetchReviews = async () => {
       try {
         const response = await api.get(`/reviews/listing/${id}`);
+
         setReviews(response.data.reviews);
         setAverageRating(response.data.averageRating);
         setTotalReviews(response.data.totalReviews);
@@ -69,7 +83,7 @@ function ListingDetails() {
         const completedBookings = (response.data.bookings || []).filter(
           (booking) =>
             booking.status === "completed" &&
-            (booking.listing?._id || booking.listing) === id
+            (booking.listing?._id || booking.listing) === id,
         );
 
         setMyBookings(completedBookings);
@@ -145,7 +159,7 @@ function ListingDetails() {
       setTotalReviews(updatedReviews.data.totalReviews);
     } catch (error) {
       setReviewError(
-        error.response?.data?.message || "Failed to submit review."
+        error.response?.data?.message || "Failed to submit review.",
       );
     } finally {
       setReviewLoading(false);
@@ -153,103 +167,154 @@ function ListingDetails() {
   };
 
   if (loading) {
-    return <p className="text-center mt-10">Loading listing...</p>;
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+        <LoaderCircle size={35} className="animate-spin text-rose-500" />
+        <p className="text-gray-500">Loading property details...</p>
+      </div>
+    );
   }
 
-  if (error) {
-    return <p className="text-center mt-10 text-red-500">{error}</p>;
+  if (error || !listing) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-5">
+        <House size={40} className="text-gray-300 mb-3" />
+        <p className="text-red-500 text-center">
+          {error || "Listing not found."}
+        </p>
+      </div>
+    );
   }
 
-  if (!listing) {
-    return <p className="text-center mt-10">Listing not found.</p>;
-  }
+  const images = listing.images || [];
+
+  const inputStyle =
+    "w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-rose-400 focus:ring-4 focus:ring-rose-50 transition";
 
   return (
-    <div className="max-w-6xl mx-auto px-5 py-8">
-
-      {/* Listing Heading */}
-      <div className="mb-6">
+    <div className="w-full max-w-none px-5 md:px-10 lg:px-12 py-8">
+      {/* Heading */}
+      <div className="mb-7">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
           {listing.title}
         </h1>
 
-        <p className="text-gray-500 mt-2">
-          {listing.location}, {listing.country}
-        </p>
+        <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-gray-500">
+          <span className="flex items-center gap-1">
+            <MapPin size={16} />
+            {listing.location}, {listing.country}
+          </span>
 
-        {totalReviews > 0 && (
-          <p className="text-sm mt-2">
-            ⭐ {averageRating} / 5 · {totalReviews} reviews
-          </p>
-        )}
+          {totalReviews > 0 && (
+            <span className="flex items-center gap-1">
+              <Star size={16} className="text-yellow-500 fill-yellow-500" />
+              {Number(averageRating).toFixed(1)} ({totalReviews} reviews)
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Listing Images */}
-      <div className="grid grid-cols-2 gap-3 max-w-3xl mx-auto mb-10">
-        {listing.images?.length > 0 ? (
-          listing.images.map((image, index) => (
-            <img
-              key={index}
-              src={image}
-              alt={listing.title}
-              className="w-full h-36 md:h-48 object-cover rounded-xl"
-            />
-          ))
+      {/* Image Gallery */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-10 h-auto md:h-[420px] overflow-hidden rounded-2xl">
+        {images.length > 0 ? (
+          <>
+            <div className="md:col-span-2 md:row-span-2 h-64 md:h-full overflow-hidden">
+              <img
+                src={images[0]}
+                alt={listing.title}
+                className="w-full h-full object-cover hover:scale-105 transition duration-500"
+              />
+            </div>
+
+            {images.slice(1, 5).map((image, index) => (
+              <div
+                key={index}
+                className="hidden md:block h-full overflow-hidden"
+              >
+                <img
+                  src={image}
+                  alt={`${listing.title} ${index + 2}`}
+                  className="w-full h-full object-cover hover:scale-105 transition duration-500"
+                />
+              </div>
+            ))}
+          </>
         ) : (
-          <p className="text-gray-500">No images available.</p>
+          <div className="md:col-span-4 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400">
+            No images available.
+          </div>
         )}
       </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-        {/* Left Section */}
-        <div className="md:col-span-2">
-
+      {/* Main Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        {/* Left Content */}
+        <div className="lg:col-span-2">
           {/* About */}
-          <section>
-            <h2 className="text-xl font-semibold mb-3">
+          <section className="pb-7 border-b border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-3">
               About this place
             </h2>
 
-            <p className="text-gray-600 leading-7">
+            <p className="text-gray-600 leading-7 whitespace-pre-line">
               {listing.description}
             </p>
-          </section>
 
-          <hr className="my-6" />
+            <div className="flex flex-wrap gap-5 mt-6 text-sm text-gray-600">
+              <span className="flex items-center gap-2">
+                <Users size={18} className="text-rose-500" />
+                {listing.maxGuests} Guests
+              </span>
 
-          {/* Property Details */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4">
-              Property Details
-            </h2>
+              <span className="flex items-center gap-2">
+                <BedDouble size={18} className="text-rose-500" />
+                {listing.bedrooms} Bedrooms
+              </span>
 
-            <div className="grid grid-cols-2 gap-4 text-gray-600">
-              <p>Category: {listing.category}</p>
-              <p>Maximum Guests: {listing.maxGuests}</p>
-              <p>Bedrooms: {listing.bedrooms}</p>
-              <p>Bathrooms: {listing.bathrooms}</p>
+              <span className="flex items-center gap-2">
+                <Bath size={18} className="text-rose-500" />
+                {listing.bathrooms} Bathrooms
+              </span>
             </div>
           </section>
 
-          <hr className="my-6" />
+          {/* Property Details */}
+          <section className="py-7 border-b border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-5">
+              Property Details
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                ["Category", listing.category],
+                ["Maximum Guests", listing.maxGuests],
+                ["Bedrooms", listing.bedrooms],
+                ["Bathrooms", listing.bathrooms],
+              ].map(([label, value]) => (
+                <div key={label} className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-xs text-gray-400 mb-1">{label}</p>
+                  <p className="font-semibold text-gray-800">{value}</p>
+                </div>
+              ))}
+            </div>
+          </section>
 
           {/* Amenities */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4">
-              Amenities
+          <section className="py-7 border-b border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-5">
+              What this place offers
             </h2>
 
             {listing.amenities?.length > 0 ? (
-              <div className="flex flex-wrap gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {listing.amenities.map((amenity, index) => (
-                  <span
+                  <div
                     key={index}
-                    className="bg-gray-100 px-4 py-2 rounded-lg text-sm"
+                    className="flex items-center gap-3 text-gray-600"
                   >
-                    {amenity}
-                  </span>
+                    <CheckCircle2 size={19} className="text-rose-500" />
+                    <span>{amenity}</span>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -257,11 +322,9 @@ function ListingDetails() {
             )}
           </section>
 
-          <hr className="my-6" />
-
           {/* Map */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4">
+          <section className="py-7 border-b border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-5">
               Where you'll be
             </h2>
 
@@ -271,34 +334,45 @@ function ListingDetails() {
             />
           </section>
 
-          <hr className="my-6" />
-
           {/* Reviews */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4">
+          <section className="py-7 border-b border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <Star size={21} className="text-yellow-500" />
               Reviews ({totalReviews})
             </h2>
 
-            <p className="text-gray-600 mb-5">
-              ⭐ {averageRating} / 5
+            <p className="text-gray-600 mb-6">
+              {totalReviews > 0
+                ? `${Number(averageRating).toFixed(1)} out of 5`
+                : "No ratings yet"}
             </p>
 
             {reviews.length > 0 ? (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {reviews.map((review) => (
                   <div
                     key={review._id}
-                    className="border rounded-xl p-4"
+                    className="border border-gray-100 rounded-2xl p-5 hover:shadow-sm transition"
                   >
-                    <h3 className="font-semibold">
+                    <h3 className="font-semibold text-gray-900">
                       {review.user?.name || "Guest"}
                     </h3>
 
-                    <p className="text-yellow-500 my-2">
-                      {"⭐".repeat(review.rating)}
-                    </p>
+                    <div className="flex items-center gap-1 my-3">
+                      {Array.from({ length: 5 }).map((_, index) => (
+                        <Star
+                          key={index}
+                          size={15}
+                          className={
+                            index < review.rating
+                              ? "text-yellow-500 fill-yellow-500"
+                              : "text-gray-200"
+                          }
+                        />
+                      ))}
+                    </div>
 
-                    <p className="text-gray-600">
+                    <p className="text-sm text-gray-600 leading-6">
                       {review.comment}
                     </p>
                   </div>
@@ -309,104 +383,124 @@ function ListingDetails() {
             )}
           </section>
 
-          <hr className="my-6" />
-
           {/* Write Review */}
-          <section className="border rounded-xl p-5">
-            <h2 className="text-xl font-semibold mb-4">
-              Write a Review
-            </h2>
+          <section className="py-7">
+            <div className="flex items-center gap-2 mb-5">
+              <MessageSquare size={21} className="text-rose-500" />
+              <h2 className="text-xl font-bold text-gray-900">
+                Write a Review
+              </h2>
+            </div>
 
             {myBookings.length === 0 && (
-              <p className="text-gray-500 mb-4 text-sm">
+              <p className="text-gray-500 text-sm mb-5">
                 You need a completed booking to write a review.
               </p>
             )}
 
-            <form onSubmit={handleSubmitReview}>
-              <select
-                value={bookingId}
-                onChange={(e) => setBookingId(e.target.value)}
-                className="w-full border rounded-lg p-3 mb-4"
-                required
-              >
-                <option value="">Select Completed Booking</option>
+            <form
+              onSubmit={handleSubmitReview}
+              className="border border-gray-100 rounded-2xl p-5 sm:p-6 space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Select Completed Booking
+                </label>
 
-                {myBookings.map((booking) => (
-                  <option key={booking._id} value={booking._id}>
-                    Booking - {booking._id.slice(-6)}
-                  </option>
-                ))}
-              </select>
+                <select
+                  value={bookingId}
+                  onChange={(e) => setBookingId(e.target.value)}
+                  className={inputStyle}
+                  required
+                >
+                  <option value="">Select a booking</option>
 
-              <label className="block mb-2 text-sm font-medium">
-                Rating
-              </label>
+                  {myBookings.map((booking) => (
+                    <option key={booking._id} value={booking._id}>
+                      Booking - {booking._id.slice(-6)}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              <select
-                value={reviewRating}
-                onChange={(e) => setReviewRating(e.target.value)}
-                className="w-full border rounded-lg p-3 mb-4"
-              >
-                <option value="5">⭐⭐⭐⭐⭐ - Excellent</option>
-                <option value="4">⭐⭐⭐⭐ - Very Good</option>
-                <option value="3">⭐⭐⭐ - Good</option>
-                <option value="2">⭐⭐ - Average</option>
-                <option value="1">⭐ - Poor</option>
-              </select>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Your Rating
+                </label>
 
-              <textarea
-                placeholder="Write your experience..."
-                value={reviewComment}
-                onChange={(e) => setReviewComment(e.target.value)}
-                className="w-full border rounded-lg p-3 mb-4"
-                rows="4"
-                required
-              />
+                <select
+                  value={reviewRating}
+                  onChange={(e) => setReviewRating(e.target.value)}
+                  className={inputStyle}
+                >
+                  <option value="5">⭐⭐⭐⭐⭐ - Excellent</option>
+                  <option value="4">⭐⭐⭐⭐ - Very Good</option>
+                  <option value="3">⭐⭐⭐ - Good</option>
+                  <option value="2">⭐⭐ - Average</option>
+                  <option value="1">⭐ - Poor</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Your Experience
+                </label>
+
+                <textarea
+                  placeholder="Share your experience..."
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  className={inputStyle}
+                  rows="4"
+                  required
+                />
+              </div>
 
               <button
                 type="submit"
                 disabled={reviewLoading || myBookings.length === 0}
-                className="bg-rose-500 hover:bg-rose-600 text-white px-5 py-3 rounded-lg disabled:opacity-50"
+                className="bg-rose-500 hover:bg-rose-600 text-white font-semibold px-6 py-3 rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {reviewLoading ? "Submitting..." : "Submit Review"}
+                {reviewLoading ? (
+                  <>
+                    <LoaderCircle size={18} className="animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit Review"
+                )}
               </button>
 
               {reviewMessage && (
-                <p className="text-green-600 mt-3 text-sm">
-                  {reviewMessage}
-                </p>
+                <p className="text-green-600 text-sm">{reviewMessage}</p>
               )}
 
               {reviewError && (
-                <p className="text-red-500 mt-3 text-sm">
-                  {reviewError}
-                </p>
+                <p className="text-red-500 text-sm">{reviewError}</p>
               )}
             </form>
           </section>
         </div>
 
-        {/* Right Section: Booking */}
+        {/* Right: Booking Card */}
         <div>
-          <div className="border rounded-xl p-6 shadow-sm h-fit md:sticky md:top-24">
-
-            <p className="text-2xl font-bold">
-              ₹{listing.price}
-              <span className="text-base font-normal text-gray-500">
-                {" "} / night
+          <div className="border border-gray-200 rounded-2xl p-6 shadow-sm h-fit lg:sticky lg:top-24">
+            <div className="flex items-baseline gap-1">
+              <span className="text-3xl font-bold text-gray-900">
+                ₹{listing.price}
               </span>
-            </p>
 
-            <hr className="my-4" />
+              <span className="text-sm text-gray-500">/ night</span>
+            </div>
 
-            <h3 className="font-semibold mb-4">
-              Book Your Stay
-            </h3>
+            <div className="border-t border-gray-100 my-5" />
+
+            <h3 className="font-bold text-gray-900 mb-5">Book Your Stay</h3>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <CalendarDays size={15} className="inline mr-1" />
                   Check-in
                 </label>
 
@@ -415,12 +509,13 @@ function ListingDetails() {
                   value={checkIn}
                   min={new Date().toLocaleDateString("en-CA")}
                   onChange={(e) => setCheckIn(e.target.value)}
-                  className="w-full border rounded-lg p-2"
+                  className={inputStyle}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <CalendarDays size={15} className="inline mr-1" />
                   Check-out
                 </label>
 
@@ -429,12 +524,13 @@ function ListingDetails() {
                   value={checkOut}
                   min={checkIn || new Date().toLocaleDateString("en-CA")}
                   onChange={(e) => setCheckOut(e.target.value)}
-                  className="w-full border rounded-lg p-2"
+                  className={inputStyle}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <Users size={15} className="inline mr-1" />
                   Guests
                 </label>
 
@@ -444,40 +540,54 @@ function ListingDetails() {
                   max={listing.maxGuests}
                   value={guests}
                   onChange={(e) => setGuests(e.target.value)}
-                  className="w-full border rounded-lg p-2"
+                  className={inputStyle}
                 />
               </div>
 
               <button
                 onClick={handleBooking}
                 disabled={bookingLoading}
-                className="w-full bg-rose-500 hover:bg-rose-600 text-white font-semibold py-3 rounded-lg disabled:opacity-50"
+                className="w-full bg-rose-500 hover:bg-rose-600 text-white font-semibold py-3.5 rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {bookingLoading ? "Booking..." : "Confirm Booking"}
+                {bookingLoading ? (
+                  <>
+                    <LoaderCircle size={19} className="animate-spin" />
+                    Booking...
+                  </>
+                ) : (
+                  "Confirm Booking"
+                )}
               </button>
 
               {bookingError && (
-                <p className="text-red-500 text-sm">
+                <p className="bg-red-50 text-red-600 text-sm p-3 rounded-xl">
                   {bookingError}
                 </p>
               )}
 
               {bookingMessage && (
-                <p className="text-green-600 text-sm">
+                <p className="bg-green-50 text-green-700 text-sm p-3 rounded-xl">
                   {bookingMessage}
                 </p>
               )}
             </div>
 
-            <hr className="my-5" />
+            <div className="border-t border-gray-100 my-5" />
 
-            <h3 className="font-semibold mb-2">
-              Hosted by
-            </h3>
+            <h3 className="font-semibold text-gray-900 mb-3">Hosted by</h3>
 
-            <p className="text-gray-600">
-              {listing.host?.name || "Host"}
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center">
+                <House size={19} />
+              </div>
+
+              <div>
+                <p className="font-semibold text-gray-800">
+                  {listing.host?.name || "Host"}
+                </p>
+                <p className="text-xs text-gray-400">Property Host</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
