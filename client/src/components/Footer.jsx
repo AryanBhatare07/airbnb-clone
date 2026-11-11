@@ -87,7 +87,7 @@ function Footer() {
           <p className="flex items-center gap-1.5 text-sm text-gray-500">
             Made with
             <Heart size={15} className="text-rose-500 fill-rose-500" />
-            for travelers
+            by Aryan
           </p>
         </div>
       </div>
